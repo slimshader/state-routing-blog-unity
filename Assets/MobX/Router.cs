@@ -1,4 +1,6 @@
-﻿public class Router
+﻿using System;
+
+public class Router
 {
     private readonly ViewStore _store;
     //private Dictionary<string, Action> _routes = new Dictionary<string, Action>();
@@ -9,27 +11,29 @@
         //_routes.Add("/document/", () => store.ShowOverview());
     }
 
+    void Add(string path, Action<int> action)
+    {
+        var parts = path.Split(":");
+    }
+
     public void Go(string url)
     {
-        var parts = url.Remove(0).Split("/");
+        var parts = url.Split("/");
 
-        if (parts.Length == 1)
+        if (parts.Length == 3)
         {
-            if (parts[0] == "/document/")
-                _store.ShowOverview();
-        }
-        else if (parts.Length == 2)
-        {
-            if (parts[0] == "/document/" && int.TryParse(parts[1], out var id))
+            if (parts[1] == "document")
             {
-                _store.ShowDocument(id);
+                if (int.TryParse(parts[2], out var id))
+                {
+                    _store.ShowDocument(id);
+                }
+                else
+                {
+                    _store.ShowOverview();
+                }
             }
         }
-
-        //if (_routes.TryGetValue(url, out Action action))
-        //{
-        //    action();
-        //}
         else
         {
             _store.ShowOverview();

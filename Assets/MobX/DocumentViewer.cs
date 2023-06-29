@@ -29,7 +29,12 @@ public class DocumentViewer : MonoBehaviour, IFetch
             Ui.rootVisualElement.Q<Label>("CurrentUserLabel").text = username;
         });
 
-        _router.Go("/document/15");
+        _router.Go("/document/");
+
+        Ui.rootVisualElement.Q<Button>().clicked += () =>
+        {
+            _router.Go(Ui.rootVisualElement.Q<TextField>().text);
+        };
     }
 
     private void RenderCurrentView(ViewStore store)

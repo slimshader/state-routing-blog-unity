@@ -64,6 +64,11 @@ public class Overview : View
     public ReactiveDocuments Documents { get; set; }
 }
 
+public class DocumentView : View
+{
+    public int Id { get; set; }
+}
+
 public interface IFetch
 {
     UniTask<T> Fetch<T>(string url);
@@ -100,7 +105,11 @@ public class ViewStore : ILifetimeScope
 
     public void ShowDocument(int id)
     {
-
+        CurrentView = new DocumentView
+        {
+            Name = "document",
+            Id = id
+        };
     }
 
     public void PerformLogin(string username, string password, Action<bool> callback)
