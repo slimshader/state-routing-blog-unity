@@ -6,24 +6,6 @@ using UniMob;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class Router
-{
-    private Dictionary<string, Action> _routes = new Dictionary<string, Action>();
-
-    public Router(ViewStore store)
-    {
-        _routes.Add("/document/", () => store.ShowOverview());
-    }
-
-    public void Go(string url)
-    {
-        if (_routes.TryGetValue(url, out Action action))
-        {
-            action();
-        }
-    }
-}
-
 public class DocumentViewer : MonoBehaviour, IFetch
 {
     public UIDocument Ui;
@@ -47,7 +29,7 @@ public class DocumentViewer : MonoBehaviour, IFetch
             Ui.rootVisualElement.Q<Label>("CurrentUserLabel").text = username;
         });
 
-        _router.Go("/document/");
+        _router.Go("/document/15");
     }
 
     private void RenderCurrentView(ViewStore store)
@@ -61,6 +43,9 @@ public class DocumentViewer : MonoBehaviour, IFetch
         {
             overview.style.display = DisplayStyle.Flex;
             document.style.display = DisplayStyle.None;
+
+            //Atom.Reaction(Lifetime, )0
+            //overview.Q<Label>("StateLabel")
         }
         else if (view?.Name == "document")
         {

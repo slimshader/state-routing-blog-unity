@@ -97,6 +97,12 @@ public class ViewStore : ILifetimeScope
             Documents = new ReactiveDocuments(Lifetime, _fetch.Fetch<DocumentInfo[]>("/json/documents.json"))
         };
     }
+
+    public void ShowDocument(int id)
+    {
+
+    }
+
     public void PerformLogin(string username, string password, Action<bool> callback)
     {
     }
