@@ -1,0 +1,14 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;">
+        <ui:VisualElement name="OverviewElement" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
+            <ui:Label tabindex="-1" text="Overview" display-tooltip-when-elided="true" name="StateLabel" />
+        </ui:VisualElement>
+        <ui:VisualElement name="DocumentElement" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
+            <ui:Label tabindex="-1" text="Document" display-tooltip-when-elided="true" />
+        </ui:VisualElement>
+        <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row;">
+            <ui:Label tabindex="-1" text="Current user:" display-tooltip-when-elided="true" />
+            <ui:Label tabindex="-1" text="Label" display-tooltip-when-elided="true" name="CurrentUserLabel" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
