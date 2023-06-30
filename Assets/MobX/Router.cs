@@ -1,14 +1,21 @@
 ﻿using System;
+using UniMob;
 
-public class Router
+public class Router : ILifetimeScope
 {
+    private readonly LifetimeController _lifetimeController = new();
     private readonly ViewStore _store;
+
+    public Lifetime Lifetime => _lifetimeController.Lifetime;
+
     //private Dictionary<string, Action> _routes = new Dictionary<string, Action>();
 
-    public Router(ViewStore store)
+    public Router(ViewStore store, Action<string> historyPush)
     {
         _store = store;
         //_routes.Add("/document/", () => store.ShowOverview());
+
+        Atom.Reaction(Lifetime, () => _store.CurrentPath, historyPush);
     }
 
     void Add(string path, Action<int> action)

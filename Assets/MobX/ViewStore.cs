@@ -62,11 +62,11 @@ public abstract class View
     public string Name { get; set; }
 }
 
-public class Overview : View, ILifetimeScope
+public class OverviewView : View, ILifetimeScope
 {
     private readonly UniTask<DocumentInfo[]> _documentTask;
 
-    public Overview(in Lifetime lifetime, UniTask<DocumentInfo[]> documentsTask)
+    public OverviewView(in Lifetime lifetime, UniTask<DocumentInfo[]> documentsTask)
     {
         Lifetime = Lifetime;
         _documentTask = documentsTask;
@@ -101,12 +101,7 @@ public class Overview : View, ILifetimeScope
 
 public class DocumentView : View
 {
-    public int Id { get; set; }
-}
-
-public interface IFetch
-{
-    UniTask<T> Fetch<T>(string url);
+    public int DocumentId { get; set; }
 }
 
 public class ViewStore : ILifetimeScope
@@ -123,6 +118,14 @@ public class ViewStore : ILifetimeScope
     [Atom]
     public bool IsAuthenticated => CurrentUser != null;
 
+    [Atom]
+    public string CurrentPath => CurrentView switch
+    {
+        OverviewView => "/document/",
+        DocumentView d => $"/document/{d.DocumentId}",
+        _ => "/document/"
+    };
+
     public ViewStore(Lifetime lifetime, IFetch fetch)
     {
         Lifetime = lifetime;
@@ -131,7 +134,7 @@ public class ViewStore : ILifetimeScope
 
     public void ShowOverview()
     {
-        CurrentView = new Overview(Lifetime, _fetch.Fetch<DocumentInfo[]>("/json/documents.json"))
+        CurrentView = new OverviewView(Lifetime, _fetch.Fetch<DocumentInfo[]>("/json/documents.json"))
         {
             Name = "overview",
         };
@@ -143,12 +146,21 @@ public class ViewStore : ILifetimeScope
         CurrentView = new DocumentView
         {
             Name = "document",
-            Id = id
+            DocumentId = id
         };
     }
 
-    public void PerformLogin(string username, string password, Action<bool> callback)
+    public async void PerformLogin(string username, string password, Action<bool> callback)
     {
-        callback(UnityEngine.Random.Range(0, 100) < 50);
+        try
+        {
+            CurrentUser = await _fetch.Fetch<User>($"/json/{username}-{password}.json");
+            callback(true);
+        }
+        catch
+        {
+
+        }
+        callback(false);
     }
 }

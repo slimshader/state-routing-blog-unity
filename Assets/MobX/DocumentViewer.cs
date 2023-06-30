@@ -37,6 +37,7 @@ class Login : VisualComponent
     private string Password { get; set; }
 
     public ViewStore Store { get; set; }
+    public Action AfterLogin { get; set; }
 
     public Login()
     {
@@ -62,6 +63,9 @@ class Login : VisualComponent
             Store.PerformLogin(Username, Password, isOk =>
             {
                 Message = isOk ? "Success" : "Fail";
+
+                if (isOk)
+                    AfterLogin();
             });
 
         };
@@ -102,7 +106,7 @@ public class DocumentViewer : MonoBehaviour, IFetch
 
         _store = new ViewStore(lifetime, this);
 
-        _router = new Router(_store);
+
 
         Atom.Reaction(lifetime, () => _store.CurrentView, v =>
         {
@@ -124,11 +128,15 @@ public class DocumentViewer : MonoBehaviour, IFetch
             Ui.rootVisualElement.Q<Label>("CurrentUserLabel").text = username;
         });
 
+        var routeInputFiled = Ui.rootVisualElement.Q<TextField>();
+
+        _router = new Router(_store, x => routeInputFiled.value = x);
+
         _router.Go("/document/");
         
         Ui.rootVisualElement.Q<Button>().clicked += () =>
         {
-            _router.Go(Ui.rootVisualElement.Q<TextField>().text);
+            _router.Go(routeInputFiled.text);
         };
 
         _listView = Ui.rootVisualElement.Q<ListView>();
@@ -160,8 +168,11 @@ public class DocumentViewer : MonoBehaviour, IFetch
 
     private VisualElement ShowDocument()
     {
+        var document = (DocumentView) _store.CurrentView;
+
         if (!_store.IsAuthenticated)
         {
+            _login.AfterLogin = () => _store.ShowDocument(document.DocumentId);
             return _login;
         }
 
@@ -176,7 +187,7 @@ public class DocumentViewer : MonoBehaviour, IFetch
             _overview.style.display = DisplayStyle.None;
         }
 
-        var overviewView = store.CurrentView as Overview;
+        var overviewView = store.CurrentView as OverviewView;
 
         Atom.Reaction(overviewView.Lifetime, () => overviewView.State, s =>
         {
@@ -208,7 +219,7 @@ public class DocumentViewer : MonoBehaviour, IFetch
 
         var text = await File.ReadAllTextAsync(fullPath);
 
-        await UniTask.Delay(1000);
+        await UniTask.Delay(UnityEngine.Random.Range(500, 1500));
 
         return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(text);
     }
