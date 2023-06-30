@@ -4,12 +4,19 @@
             <ui:Button text="Go" display-tooltip-when-elided="true" name="GoButton" />
         </ui:TextField>
         <ui:VisualElement name="OverviewElement" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
-            <ui:Label tabindex="-1" text="Overview" display-tooltip-when-elided="true" name="StateLabel" />
-            <ui:ListView focusable="true" />
+            <ui:Label tabindex="-1" text="Overview" display-tooltip-when-elided="true" name="StatusLabel" />
+            <ui:ListView focusable="true" fixed-item-height="30" selection-type="None" />
         </ui:VisualElement>
         <ui:VisualElement name="DocumentElement" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
             <ui:Label tabindex="-1" text="Document" display-tooltip-when-elided="true" />
         </ui:VisualElement>
+        <Login>
+            <ui:Label tabindex="-1" text="Please login" display-tooltip-when-elided="true" />
+            <ui:Label tabindex="-1" text="Label" display-tooltip-when-elided="true" name="MessageLabel" />
+            <ui:TextField picking-mode="Ignore" label="Username" name="UsernameTextField" />
+            <ui:TextField picking-mode="Ignore" label="Password" name="PasswordTextField" password="true" />
+            <ui:Button text="Login" display-tooltip-when-elided="true" />
+        </Login>
         <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row;">
             <ui:Label tabindex="-1" text="Current user:" display-tooltip-when-elided="true" />
             <ui:Label tabindex="-1" text="Label" display-tooltip-when-elided="true" name="CurrentUserLabel" />

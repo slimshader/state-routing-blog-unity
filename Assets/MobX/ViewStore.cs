@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using System;
 using UniMob;
+using UnityEngine;
 
 public enum DState
 {
@@ -52,6 +53,8 @@ public sealed class DocumentInfo
 {
     public int Id;
     public string Name;
+
+    public override string ToString() => $"{Id} : {Name}";
 }
 
 public abstract class View
@@ -59,9 +62,41 @@ public abstract class View
     public string Name { get; set; }
 }
 
-public class Overview : View
+public class Overview : View, ILifetimeScope
 {
-    public ReactiveDocuments Documents { get; set; }
+    private readonly UniTask<DocumentInfo[]> _documentTask;
+
+    public Overview(in Lifetime lifetime, UniTask<DocumentInfo[]> documentsTask)
+    {
+        Lifetime = Lifetime;
+        _documentTask = documentsTask;
+
+        Observe(documentsTask).Forget();
+    }
+
+    private async UniTask Observe(UniTask<DocumentInfo[]> task)
+    {
+        State = DState.Pending;
+
+        try
+        {
+            Documents = await task;
+            State = DState.Fulfilled;
+        }
+        catch (Exception ex)
+        {
+            State = DState.Rejected;
+        }
+    }
+
+
+    [Atom]
+    public DocumentInfo[] Documents { get; private set; }
+
+    [Atom]
+    public DState State { get; private set; }
+
+    public Lifetime Lifetime { get; }
 }
 
 public class DocumentView : View
@@ -96,15 +131,15 @@ public class ViewStore : ILifetimeScope
 
     public void ShowOverview()
     {
-        CurrentView = new Overview
+        CurrentView = new Overview(Lifetime, _fetch.Fetch<DocumentInfo[]>("/json/documents.json"))
         {
             Name = "overview",
-            Documents = new ReactiveDocuments(Lifetime, _fetch.Fetch<DocumentInfo[]>("/json/documents.json"))
         };
     }
 
     public void ShowDocument(int id)
     {
+        Debug.Log($"Will show document {id}");
         CurrentView = new DocumentView
         {
             Name = "document",
@@ -114,5 +149,6 @@ public class ViewStore : ILifetimeScope
 
     public void PerformLogin(string username, string password, Action<bool> callback)
     {
+        callback(UnityEngine.Random.Range(0, 100) < 50);
     }
 }
