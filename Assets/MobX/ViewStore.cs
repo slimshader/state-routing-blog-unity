@@ -1,13 +1,19 @@
 using Cysharp.Threading.Tasks;
 using System;
 using UniMob;
-using UnityEngine;
 
 public enum DState
 {
     Pending,
     Rejected,
     Fulfilled
+}
+
+public class Document
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Text { get; set; }
 }
 
 public sealed class ReactiveDocuments : ILifetimeScope
@@ -44,11 +50,6 @@ public sealed class ReactiveDocuments : ILifetimeScope
     public Lifetime Lifetime { get; }
 }
 
-public class User
-{
-    public string Name { get; set; }
-}
-
 public sealed class DocumentInfo
 {
     public int Id;
@@ -57,63 +58,15 @@ public sealed class DocumentInfo
     public override string ToString() => $"{Id} : {Name}";
 }
 
-public abstract class View
+public class ViewStore : Store
 {
-    public string Name { get; set; }
-}
-
-public class OverviewView : View, ILifetimeScope
-{
-    private readonly UniTask<DocumentInfo[]> _documentTask;
-
-    public OverviewView(in Lifetime lifetime, UniTask<DocumentInfo[]> documentsTask)
-    {
-        Lifetime = Lifetime;
-        _documentTask = documentsTask;
-
-        Observe(documentsTask).Forget();
-    }
-
-    private async UniTask Observe(UniTask<DocumentInfo[]> task)
-    {
-        State = DState.Pending;
-
-        try
-        {
-            Documents = await task;
-            State = DState.Fulfilled;
-        }
-        catch (Exception ex)
-        {
-            State = DState.Rejected;
-        }
-    }
-
-
-    [Atom]
-    public DocumentInfo[] Documents { get; private set; }
-
-    [Atom]
-    public DState State { get; private set; }
-
-    public Lifetime Lifetime { get; }
-}
-
-public class DocumentView : View
-{
-    public int DocumentId { get; set; }
-}
-
-public class ViewStore : ILifetimeScope
-{
-    public Lifetime Lifetime { get; }
     private readonly IFetch _fetch;
 
     [Atom]
     public User CurrentUser {  get; private set; }
 
     [Atom]
-    public View CurrentView { get; private set; }
+    public Store CurrentView { get; private set; }
 
     [Atom]
     public bool IsAuthenticated => CurrentUser != null;
@@ -121,20 +74,19 @@ public class ViewStore : ILifetimeScope
     [Atom]
     public string CurrentPath => CurrentView switch
     {
-        OverviewView => "/document/",
-        DocumentView d => $"/document/{d.DocumentId}",
+        OverviewStore => "/document/",
+        DocumentStore d => $"/document/{d.DocumentId}",
         _ => "/document/"
     };
 
-    public ViewStore(Lifetime lifetime, IFetch fetch)
+    public ViewStore(IFetch fetch)
     {
-        Lifetime = lifetime;
         _fetch = fetch;
     }
 
     public void ShowOverview()
     {
-        CurrentView = new OverviewView(Lifetime, _fetch.Fetch<DocumentInfo[]>("/json/documents.json"))
+        CurrentView = new OverviewStore(_fetch.Fetch<DocumentInfo[]>("/json/documents.json"))
         {
             Name = "overview",
         };
@@ -142,8 +94,7 @@ public class ViewStore : ILifetimeScope
 
     public void ShowDocument(int id)
     {
-        Debug.Log($"Will show document {id}");
-        CurrentView = new DocumentView
+        CurrentView = new DocumentStore(_fetch.Fetch<Document>($"/json/{id}.json"))
         {
             Name = "document",
             DocumentId = id

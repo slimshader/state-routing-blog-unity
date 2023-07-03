@@ -8,7 +8,10 @@
             <ui:ListView focusable="true" fixed-item-height="30" selection-type="None" />
         </ui:VisualElement>
         <ui:VisualElement name="DocumentElement" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
-            <ui:Label tabindex="-1" text="Document" display-tooltip-when-elided="true" />
+            <ui:Label tabindex="-1" text="Document" display-tooltip-when-elided="true" name="StatusLabel" />
+            <ui:Label tabindex="-1" text="Label" display-tooltip-when-elided="true" name="NameLabel" />
+            <ui:Label tabindex="-1" text="Label" display-tooltip-when-elided="true" name="TextLabel" />
+            <ui:Button text="Back to documents" display-tooltip-when-elided="true" />
         </ui:VisualElement>
         <Login>
             <ui:Label tabindex="-1" text="Please login" display-tooltip-when-elided="true" />

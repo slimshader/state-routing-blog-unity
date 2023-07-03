@@ -8,12 +8,9 @@ public class Router : ILifetimeScope
 
     public Lifetime Lifetime => _lifetimeController.Lifetime;
 
-    //private Dictionary<string, Action> _routes = new Dictionary<string, Action>();
-
     public Router(ViewStore store, Action<string> historyPush)
     {
         _store = store;
-        //_routes.Add("/document/", () => store.ShowOverview());
 
         Atom.Reaction(Lifetime, () => _store.CurrentPath, historyPush);
     }

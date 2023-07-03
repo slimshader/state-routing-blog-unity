@@ -1,92 +1,10 @@
 using Cysharp.Threading.Tasks;
-using System;
 using System.IO;
 using UniMob;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-abstract class  VisualComponent : VisualElement, ILifetimeScope
-{
-    private readonly LifetimeController _lifetimeController = new();
-
-    public Lifetime Lifetime => _lifetimeController.Lifetime;
-
-    public VisualComponent()
-    {
-        RegisterCallback<GeometryChangedEvent>(OnGeometryChangedInit);
-    }
-
-    protected virtual void OnInit(Lifetime lifetime) { }
-
-    protected void OnGeometryChangedInit(GeometryChangedEvent e)
-    {
-        UnregisterCallback<GeometryChangedEvent>(OnGeometryChangedInit);
-
-        OnInit(Lifetime);
-    }
-}
-
-class Login : VisualComponent
-{
-    public new class UxmlFactory : UxmlFactory<Login> { }
-
-    [Atom]
-    private string Message { get; set; }
-
-    private string Username { get; set; }
-    private string Password { get; set; }
-
-    public ViewStore Store { get; set; }
-    public Action AfterLogin { get; set; }
-
-    public Login()
-    {
-        
-    }
-
-    protected override void OnInit(Lifetime lifetime)
-    {
-        var messageLabel = this.Q<Label>("MessageLabel");
-        Atom.Reaction(lifetime, () => Message, x => messageLabel.text = x);
-
-        this.Q<TextField>("UsernameTextField").RegisterValueChangedCallback(e =>
-        {
-            Username = e.newValue;
-        });
-
-        this.Q<TextField>("PasswordTextField").RegisterValueChangedCallback(e =>
-        { Password = e.newValue; });
-
-        this.Q<Button>().clicked += () =>
-        {
-            Debug.Log($"Will attempt login with {Username} and {Password}");
-            Store.PerformLogin(Username, Password, isOk =>
-            {
-                Message = isOk ? "Success" : "Fail";
-
-                if (isOk)
-                    AfterLogin();
-            });
-
-        };
-        Message = "YOLO";
-    }
-
-}
-
-class DocumentOverviewItem : VisualElement
-{
-    public DocumentOverviewItem(Action<int> onClicked)
-    {
-        var btn = new Button();
-        btn.clicked += () => onClicked(Id);
-        Add(btn);
-    }
-
-    public int Id { get; set; }
-}
-
-public class DocumentViewer : MonoBehaviour, IFetch
+public class DocumentViewer : MonoBehaviour, IFetch, ILifetimeScope
 {
     public UIDocument Ui;
 
@@ -100,15 +18,14 @@ public class DocumentViewer : MonoBehaviour, IFetch
     private Login _login;
 
     private VisualElement _current;
+
+    Lifetime ILifetimeScope.Lifetime => _lifetimeController.Lifetime;
+
     void Start()
     {
-        var lifetime = _lifetimeController.Lifetime;
+        _store = new ViewStore(this);
 
-        _store = new ViewStore(lifetime, this);
-
-
-
-        Atom.Reaction(lifetime, () => _store.CurrentView, v =>
+        this.Reaction(() => _store.CurrentView, v =>
         {
             if (_current != null)
             {
@@ -123,7 +40,7 @@ public class DocumentViewer : MonoBehaviour, IFetch
             }
         });
 
-        Atom.Reaction(lifetime, () => _store.IsAuthenticated ? _store.CurrentUser.Name : "unknown user", username =>
+        this.Reaction(() => _store.IsAuthenticated ? _store.CurrentUser.Name : "unknown user", username =>
         {
             Ui.rootVisualElement.Q<Label>("CurrentUserLabel").text = username;
         });
@@ -144,6 +61,10 @@ public class DocumentViewer : MonoBehaviour, IFetch
 
         _document = Ui.rootVisualElement.Q<VisualElement>("DocumentElement");
         _document.style.display = DisplayStyle.None;
+        _document.Q<Button>().clicked += () =>
+        {
+            _store.ShowOverview();
+        };
 
         _login = Ui.rootVisualElement.Q<Login>();
         _login.style.display = DisplayStyle.None;
@@ -168,13 +89,20 @@ public class DocumentViewer : MonoBehaviour, IFetch
 
     private VisualElement ShowDocument()
     {
-        var document = (DocumentView) _store.CurrentView;
+        var document = (DocumentStore) _store.CurrentView;
 
         if (!_store.IsAuthenticated)
         {
             _login.AfterLogin = () => _store.ShowDocument(document.DocumentId);
             return _login;
         }
+
+        document.Reaction(() => document.Value, x =>
+        {
+            _document.Q<Label>("NameLabel").text = x?.Name;
+            _document.Q<Label>("TextLabel").text = x?.Text;
+        });
+
 
         return _document;
     }
@@ -187,14 +115,14 @@ public class DocumentViewer : MonoBehaviour, IFetch
             _overview.style.display = DisplayStyle.None;
         }
 
-        var overviewView = store.CurrentView as OverviewView;
+        var overviewStore = store.CurrentView as OverviewStore;
 
-        Atom.Reaction(overviewView.Lifetime, () => overviewView.State, s =>
+        overviewStore.Reaction(() => overviewStore.State, s =>
         {
             _overview.Q<Label>("StatusLabel").text = s.ToString();
         });
 
-        Atom.Reaction(overviewView.Lifetime, () => overviewView.Documents, ds =>
+        overviewStore.Reaction(() => overviewStore.Documents, ds =>
         {
             _listView.itemsSource = ds;
 
